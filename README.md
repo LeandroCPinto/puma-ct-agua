@@ -76,3 +76,7 @@ No celular, instale o app ntfy e inscreva o tópico do `.env`. O estado (o que j
 ## Cache do navegador (embed no Notion)
 
 O GitHub Pages serve os arquivos com `max-age=600` e o embed do Notion não tem como forçar recarga. Por isso `index.html` carrega `app.js?v=<versão>` e `style.css?v=<versão>`: **ao alterar `app.js` ou `style.css`, troque esse `v=` no `index.html`** (o hash curto do commit serve). Os dados (`data/*.json`) já são buscados sem cache.
+
+## Intervalos sem registro
+
+Sequências de zeros exatos com 24 h ou mais (`ZEROS_MIN_H` em `exportar.py`) viram `null` em `consumo.json` e são listadas em `meta.json` (`sem_registro`). O prédio nunca chega a 0 nem de madrugada, então esses trechos são falha do medidor ou da coleta, não consumo zero; o site os mostra como faixas cinza e os deixa fora das somas e médias.

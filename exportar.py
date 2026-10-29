@@ -10,7 +10,7 @@ Uso:
 
 Saídas (em data/):
     consumo.json  {inicio, passo_h, v: [m³/h por hora, null = sem dado]}
-    meta.json     {gerado_em, ultimo_ponto, n_horas, n_nulos, total_m3}
+    meta.json     {gerado_em, ultimo_ponto, n_horas, n_nulos, total_m3, sem_registro}
     ocupacao.json {semestre, dias: {Seg: [{h, n}, ...], ...}}  (só com --ocupacao)
 
 Só reescreve um arquivo quando o conteúdo muda, para que o git do cron não
@@ -29,6 +29,9 @@ from xml.etree import ElementTree as ET
 
 TZ = timezone(timedelta(hours=-3))  # America/Sao_Paulo, sem horário de verão desde 2019
 DATA = Path(__file__).resolve().parent / "data"
+# Sequência de zeros exatos a partir desta duração vira "sem registro": o prédio
+# nunca chega a 0 nem de madrugada, então é falha do medidor ou da coleta.
+ZEROS_MIN_H = 24
 
 
 def gravar_se_mudou(caminho, obj):
@@ -51,6 +54,25 @@ def ler_csv(caminho):
     return serie
 
 
+def anular_zeros_longos(v, inicio):
+    """Troca por null as sequências de >= ZEROS_MIN_H horas com 0 exato e devolve
+    os intervalos [início, fim (última hora), horas] em ISO local."""
+    intervalos, i = [], 0
+    while i < len(v):
+        if v[i] != 0:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(v) and v[j + 1] == 0:
+            j += 1
+        if j - i + 1 >= ZEROS_MIN_H:
+            v[i:j + 1] = [None] * (j - i + 1)
+            iso = lambda k: (inicio + timedelta(hours=k)).replace(tzinfo=TZ).isoformat(timespec="minutes")
+            intervalos.append([iso(i), iso(j), j - i + 1])
+        i = j + 1
+    return intervalos
+
+
 def exportar_consumo(csv_path):
     serie = ler_csv(csv_path)
     inicio, fim = min(serie), max(serie)
@@ -62,6 +84,7 @@ def exportar_consumo(csv_path):
         x = serie.get(t)
         v.append(None if x is None else round(x, 3))
         t += timedelta(hours=1)
+    sem_registro = anular_zeros_longos(v, inicio)
 
     consumo = {
         "inicio": inicio.replace(tzinfo=TZ).isoformat(timespec="minutes"),
@@ -81,9 +104,11 @@ def exportar_consumo(csv_path):
         "n_horas": len(v),
         "n_nulos": sum(x is None for x in v),
         "total_m3": round(sum(x for x in v if x is not None), 3),
+        "sem_registro": sem_registro,
     }
     gravar_se_mudou(meta_path, meta)
-    print(f"consumo.json: {len(v)} horas ({meta['n_nulos']} sem dado), "
+    print(f"consumo.json: {len(v)} horas ({meta['n_nulos']} sem dado, "
+          f"{len(sem_registro)} intervalos de zeros ≥ {ZEROS_MIN_H} h anulados), "
           f"{inicio:%d/%m/%Y %H:%M} → {fim:%d/%m/%Y %H:%M}, "
           f"{meta['total_m3']:.2f} m³ — {'atualizado' if mudou else 'sem mudanças'}")
     return mudou

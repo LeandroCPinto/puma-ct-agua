@@ -6,9 +6,9 @@
 <title>Água no Prédio 9C</title>
 <meta name="description" content="Consumo de água do Prédio 9C do Centro de Tecnologia da UFSM, medido pelo Hidrômetro 1 do programa PUMA/CT e atualizado a cada hora.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232a78d6' d='M12 2C8 8 5 11.5 5 15a7 7 0 0 0 14 0c0-3.5-3-7-7-13z'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=623db34">
+<link rel="stylesheet" href="style.css?v=semreg1">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js" defer></script>
-<script src="app.js?v=623db34" defer></script>
+<script src="app.js?v=semreg1" defer></script>
 </head>
 <body>
 <header class="topo">
@@ -45,6 +45,7 @@
         <p>Medidor com telemetria instalado na entrada de água do <span data-predio>Prédio 9C</span> do Centro de Tecnologia da UFSM, no âmbito do programa PUMA/CT. O módulo publica a leitura a cada ~5 minutos no sistema de monitoramento da Spinon, e este painel agrega o consumo hora a hora desde 22/10/2024.</p>
         <p>Use as abas para ver o consumo por hora, dia, semana e mês, o perfil médio por dia da semana e o perfil de ocupação do prédio.</p>
         <p class="nota">Os dados são atualizados automaticamente a cada hora. A hora corrente só entra quando fecha.</p>
+        <p class="nota" id="sem-registro" hidden></p>
         <p><a href="data/consumo.json" download>Baixar a série horária (JSON)</a></p>
       </div>
     </div>

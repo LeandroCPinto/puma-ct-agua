@@ -100,7 +100,7 @@ function baseBarras(t, { rotulos, valores, unidade, nomeY, zoom, rotuloBarra, to
     tooltip: {
       trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: t.grade, opacity: .5 } },
       backgroundColor: t.sup, borderColor: t.borda, textStyle: { color: t.texto, fontSize: 13 },
-      formatter: p => { const i = p[0].dataIndex; return `<b>${tooltipRot ? tooltipRot(i) : rotulos[i]}</b><br>${valores[i] == null ? "sem dado" : num(valores[i], unidade.d) + " " + unidade.u}`; },
+      formatter: p => { const i = p[0].dataIndex; return `<b>${tooltipRot ? tooltipRot(i) : rotulos[i]}</b><br>${valores[i] == null ? "sem registro" : num(valores[i], unidade.d) + " " + unidade.u}`; },
     },
     xAxis: {
       type: "category", data: rotulos,
@@ -133,6 +133,12 @@ function baseBarras(t, { rotulos, valores, unidade, nomeY, zoom, rotuloBarra, to
     op.series[0].data = valores.map((v, i) => [xs[i], v]);
     op.series[0].barMaxWidth = 14;
     op.dataZoom.forEach(z => { delete z.labelFormatter; z.labelFormatter = v => rotuloTempo(v); });
+    // Faixas cinza nos intervalos sem registro (zeros longos anulados pelo exportar.py);
+    // rótulo só nos de 7 dias ou mais, para não poluir.
+    op.series[0].markArea = { silent: true, itemStyle: { color: t.mudo, opacity: .14 },
+      label: { color: t.texto2, fontSize: 11, position: "insideTop" },
+      data: (estado.meta.sem_registro || []).map(([a, b, h]) => [
+        { xAxis: paraEixo(Date.parse(a)), name: h >= 24 * 7 ? "sem registro" : "" }, { xAxis: paraEixo(Date.parse(b) + H) }]) };
   }
   return op;
 }
@@ -197,7 +203,8 @@ function desenharMensal(t) {
     zoom: zoomDe("mensal", m.length),
     // Valor em cima da barra só quando cabe; no celular fica no tooltip e na tabela.
     rotuloBarra: document.getElementById("g-mensal").offsetWidth / Math.min(janela.mensal || m.length, m.length) >= 38,
-    tooltipRot: i => { const l = local(m[i].ms); return `${MESES_LONGOS[l.m]} de ${l.a}`; },
+    tooltipRot: i => { const l = local(m[i].ms), n = new Date(l.a, l.m + 1, 0).getDate() * 24;
+      return `${MESES_LONGOS[l.m]} de ${l.a}${m[i].n && m[i].n < n ? ` · ${m[i].n} de ${n} h com dado` : ""}`; },
   }), true);
   const corpo = document.querySelector("#t-mensal tbody");
   corpo.replaceChildren(...m.slice().reverse().map(x => {
@@ -309,6 +316,10 @@ function atualizarResumo() {
   const lf = local(ultimo);
   const ger = local(Date.parse(estado.meta.gerado_em));
   st.textContent = `Dados até ${brDia(lf)} ${pad(lf.h)}:00 · atualizado em ${brDia(ger)} ${pad(ger.h)}:${pad(new Date(Date.parse(estado.meta.gerado_em)).getUTCMinutes())}`;
+  const sr = estado.meta.sem_registro || [], nota = document.getElementById("sem-registro");
+  nota.hidden = !sr.length;
+  nota.textContent = `Sem registro (falha do medidor ou da coleta, não consumo zero): ${sr.map(([a, b]) => {
+    const x = local(Date.parse(a)), y = local(Date.parse(b)); return `${brDia(x)} a ${brDia(y)}`; }).join("; ")}. Essas horas ficam fora das somas e médias.`;
   st.className = "status " + (atrasoH > LIMITE_ATRASO_H ? "velho" : "ok");
   if (atrasoH > LIMITE_ATRASO_H) st.textContent += ` · medidor sem comunicação há ${Math.floor(atrasoH)} h`;
 }
