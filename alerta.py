@@ -9,6 +9,9 @@ o cron do ryzen7, alguns minutos depois do atualizar.sh:
 Verificações:
     sem dado    último ponto com mais de SEM_DADO_H horas (igual ao rodapé do
                 painel). Avisa ao começar, repete a cada 12 h e avisa quando volta.
+    parado      zeros há 24 h ou mais até o último ponto (o exportar.py marca
+                como "sem registro" e o diário não enxerga). Avisa ao começar,
+                repete a cada 12 h e avisa quando a medição volta.
     diário      total de ontem comparado com a mediana do mesmo dia da semana
                 nas 6 semanas anteriores; avisa acima de 2× ou abaixo de 0,5×.
                 Em feriado só avisa o consumo alto.
@@ -121,6 +124,26 @@ def verificar_sem_dado(cfg, estado, agora, seco):
     return ultimo
 
 
+def verificar_parado(cfg, estado, agora, ultimo, seco):
+    meta = json.loads((DATA / "meta.json").read_text(encoding="utf-8"))
+    sr = meta.get("sem_registro") or []
+    s = estado.setdefault("parado", {})
+    if sr and datetime.fromisoformat(sr[-1][1]) == ultimo:
+        ini, horas = datetime.fromisoformat(sr[-1][0]), sr[-1][2]
+        avisado = s.get("avisado_em")
+        if not avisado or agora - datetime.fromisoformat(avisado) >= timedelta(hours=REPETIR_SEM_DADO_H):
+            notificar(cfg, "Hidrômetro 1 marcando zero",
+                      f"Consumo zero desde {ini:%d/%m %H:%M} ({horas} h). "
+                      "Falta de água, medidor travado ou falha na coleta?",
+                      prioridade=4, tags=("warning",), seco=seco)
+            s["avisado_em"] = agora.isoformat(timespec="seconds")
+    elif s.get("avisado_em"):
+        notificar(cfg, "Hidrômetro 1 voltou a medir",
+                  f"Consumo diferente de zero de novo; último ponto {ultimo:%d/%m %H:%M}.",
+                  prioridade=3, tags=("white_check_mark",), seco=seco)
+        s.pop("avisado_em")
+
+
 def verificar_diario(cfg, estado, ultimo, seco):
     # Último dia completo: o próprio dia do último ponto só se ele já chegou às 23h.
     ontem = ultimo.date() if ultimo.hour == 23 else ultimo.date() - timedelta(days=1)
@@ -186,6 +209,7 @@ def main():
 
     estado = json.loads(ESTADO.read_text(encoding="utf-8")) if ESTADO.exists() and not args.seco else {}
     ultimo = verificar_sem_dado(cfg, estado, agora, args.seco)
+    verificar_parado(cfg, estado, agora, ultimo, args.seco)
     verificar_diario(cfg, estado, ultimo, args.seco)
     verificar_madrugada(cfg, estado, ultimo, args.seco)
     if not args.seco:
