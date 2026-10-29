@@ -48,3 +48,7 @@ Se o cron atual já roda o `download_auto2.py`, troque essa entrada por esta, qu
 - **Ver localmente:** `python3 -m http.server`, depois abra http://localhost:8000.
 
 Só usa a biblioteca padrão do Python. As credenciais da Spinon ficam no `download_auto2.py` do Drive e nunca entram neste repositório.
+
+## Cache do navegador (embed no Notion)
+
+O GitHub Pages serve os arquivos com `max-age=600` e o embed do Notion não tem como forçar recarga. Por isso `index.html` carrega `app.js?v=<versão>` e `style.css?v=<versão>`: **ao alterar `app.js` ou `style.css`, troque esse `v=` no `index.html`** (o hash curto do commit serve). Os dados (`data/*.json`) já são buscados sem cache.
