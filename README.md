@@ -41,6 +41,25 @@ crontab -e
 
 Se o cron atual já roda o `download_auto2.py`, troque essa entrada por esta, que faz o download e a publicação.
 
+## Alertas no celular
+
+`alerta.py` roda no cron do ryzen7 às :25 (depois do `atualizar.sh`), lê `data/*.json` e manda notificações pelo [ntfy](https://ntfy.sh):
+
+- **sem dados:** último ponto com mais de 6 h; repete a cada 12 h e avisa quando volta;
+- **consumo diário:** total de ontem acima de 2× ou abaixo de 0,5× a mediana do mesmo dia da semana nas 6 semanas anteriores (em feriado só avisa o alto);
+- **possível vazamento:** média das 2h às 5h acima de 3× a mediana das 30 noites anteriores.
+
+O limite de 20% não serve: o consumo é baixo e irregular, e no histórico 77% dos dias fugiram mais de 20% da referência.
+
+```bash
+# no ~/.config/puma-ct-agua.env:  NTFY_TOPIC="puma-ct-agua-<secreto>"   (opcional: ALERTA_FATOR="2")
+~/puma-ct-agua/alerta.py --teste   # notificação de teste
+~/puma-ct-agua/alerta.py --seco    # só imprime o que avisaria
+# 25 * * * * $HOME/puma-ct-agua/alerta.py >> $HOME/logs/puma-agua-alerta.log 2>&1
+```
+
+No celular, instale o app ntfy e inscreva o tópico do `.env`. O estado (o que já foi avisado) fica em `~/.local/state/puma-ct-agua/alerta.json`. Se o próprio ryzen7 cair, nenhum aviso sai.
+
 ## Atualizações manuais
 
 - **Novo semestre:** acrescente em `data/calendario.json` as datas do calendário da UFSM.
