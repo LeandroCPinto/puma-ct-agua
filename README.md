@@ -27,16 +27,16 @@ Abas: Hidrômetro 1, consumo horário, diário, semanal (segunda a domingo) e me
 ## Instalação no ryzen7
 
 ```bash
-git clone git@github.com:LeandroCPinto/puma-ct-agua.git ~/puma-ct-agua
+git clone git@github.com:LeandroCPinto/puma-ct-agua.git ~/Documentos/puma-ct-agua
 mkdir -p ~/logs
 # se a pasta do Drive ou o python do download forem outros:
 cat > ~/.config/puma-ct-agua.env <<'EOF'
 HIDROMETRO_DIR="/caminho/para/Medições/Hidrometro1"
 PYTHON_DOWNLOAD="/caminho/do/python/com/pandas/e/playwright"
 EOF
-SEM_DOWNLOAD=1 ~/puma-ct-agua/atualizar.sh      # teste sem baixar
+SEM_DOWNLOAD=1 ~/Documentos/puma-ct-agua/atualizar.sh      # teste sem baixar
 crontab -e
-# 10 * * * * $HOME/puma-ct-agua/atualizar.sh >> $HOME/logs/puma-agua.log 2>&1
+# 10 * * * * $HOME/Documentos/puma-ct-agua/atualizar.sh >> $HOME/logs/puma-agua.log 2>&1
 ```
 
 Se o cron atual já roda o `download_auto2.py`, troque essa entrada por esta, que faz o download e a publicação.
@@ -53,9 +53,9 @@ O limite de 20% não serve: o consumo é baixo e irregular, e no histórico 77% 
 
 ```bash
 # no ~/.config/puma-ct-agua.env:  NTFY_TOPIC="puma-ct-agua-<secreto>"   (opcional: ALERTA_FATOR="2")
-~/puma-ct-agua/alerta.py --teste   # notificação de teste
-~/puma-ct-agua/alerta.py --seco    # só imprime o que avisaria
-# 25 * * * * $HOME/puma-ct-agua/alerta.py >> $HOME/logs/puma-agua-alerta.log 2>&1
+~/Documentos/puma-ct-agua/alerta.py --teste   # notificação de teste
+~/Documentos/puma-ct-agua/alerta.py --seco    # só imprime o que avisaria
+# 25 * * * * $HOME/Documentos/puma-ct-agua/alerta.py >> $HOME/logs/puma-agua-alerta.log 2>&1
 ```
 
 No celular, instale o app ntfy e inscreva o tópico do `.env`. O estado (o que já foi avisado) fica em `~/.local/state/puma-ct-agua/alerta.json`. Se o próprio ryzen7 cair, nenhum aviso sai.

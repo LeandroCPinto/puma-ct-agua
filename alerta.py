@@ -4,7 +4,7 @@
 Avisa no celular (ntfy) quando o Hidrômetro 1 para de mandar dado ou quando o
 consumo foge do padrão. Lê os data/*.json que o atualizar.sh gera; feito para
 o cron do ryzen7, alguns minutos depois do atualizar.sh:
-    25 * * * * $HOME/puma-ct-agua/alerta.py >> $HOME/logs/puma-agua-alerta.log 2>&1
+    25 * * * * $HOME/Documentos/puma-ct-agua/alerta.py >> $HOME/logs/puma-agua-alerta.log 2>&1
 
 Verificações:
     sem dado    último ponto com mais de SEM_DADO_H horas (igual ao rodapé do

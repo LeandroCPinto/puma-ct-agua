@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Atualiza o painel público: baixa as últimas horas do Hidrômetro 1, regenera
 # data/*.json e publica no GitHub Pages se algo mudou. Feito para o cron do ryzen7:
-#   10 * * * * $HOME/puma-ct-agua/atualizar.sh >> $HOME/logs/puma-agua.log 2>&1
+#   10 * * * * $HOME/Documentos/puma-ct-agua/atualizar.sh >> $HOME/logs/puma-agua.log 2>&1
 #
 # Configuração (opcional) em ~/.config/puma-ct-agua.env:
 #   HIDROMETRO_DIR=".../Medições/Hidrometro1"   # onde estão download_auto2.py e o CSV
