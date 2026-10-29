@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Água no Prédio 7C</title>
+<meta name="description" content="Consumo de água do Prédio 7C do Centro de Tecnologia da UFSM, medido pelo Hidrômetro 1 do programa PUMA/CT e atualizado a cada hora.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232a78d6' d='M12 2C8 8 5 11.5 5 15a7 7 0 0 0 14 0c0-3.5-3-7-7-13z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="topo">
+  <div class="titulo">
+    <p class="sobre">PUMA/CT · UFSM</p>
+    <h1>Consumo de água no <span data-predio>Prédio 7C</span></h1>
+  </div>
+  <button id="tema" class="tema" type="button" aria-label="Alternar tema claro/escuro">◐</button>
+</header>
+
+<section class="kpis" aria-label="Resumo">
+  <div class="kpi"><span class="rot">Últimas 24 h</span><span class="val" id="k-24h">–</span></div>
+  <div class="kpi"><span class="rot">Últimos 7 dias</span><span class="val" id="k-7d">–</span></div>
+  <div class="kpi"><span class="rot" id="k-mes-rot">Mês atual</span><span class="val" id="k-mes">–</span></div>
+  <div class="kpi"><span class="rot">Desde 22/10/2024</span><span class="val" id="k-total">–</span></div>
+</section>
+
+<nav class="abas" role="tablist" aria-label="Páginas do painel">
+  <button role="tab" data-aba="hidrometro">Hidrômetro 1</button>
+  <button role="tab" data-aba="horario">Consumo horário</button>
+  <button role="tab" data-aba="diario">Consumo diário</button>
+  <button role="tab" data-aba="semanal">Consumo semanal</button>
+  <button role="tab" data-aba="mensal">Consumo mensal</button>
+  <button role="tab" data-aba="perfil">Perfil de consumo</button>
+  <button role="tab" data-aba="ocupacao">Perfil de ocupação</button>
+</nav>
+
+<main>
+  <section class="painel" data-painel="hidrometro">
+    <div class="cartao sobre-medidor">
+      <img src="img/hidrometro.jpg" alt="Abrigo de alvenaria com o hidrômetro 1 e o módulo de telemetria, ao lado do prédio" width="720" height="1280" loading="lazy">
+      <div>
+        <h2>Hidrômetro 1</h2>
+        <p>Medidor com telemetria instalado na entrada de água do <span data-predio>Prédio 7C</span> do Centro de Tecnologia da UFSM, no âmbito do programa PUMA/CT. O módulo publica a leitura a cada ~5 minutos no sistema de monitoramento da Spinon, e este painel agrega o consumo hora a hora desde 22/10/2024.</p>
+        <p>Use as abas para ver o consumo por hora, dia, semana e mês, o perfil médio por dia da semana no período letivo e o perfil de ocupação do prédio.</p>
+        <p class="nota">Os dados são atualizados automaticamente a cada hora. A hora corrente só entra quando fecha.</p>
+        <p><a href="data/consumo.json" download>Baixar a série horária (JSON)</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="painel" data-painel="horario">
+    <div class="cartao">
+      <div class="filtros" data-filtros="horario"></div>
+      <div class="grafico" id="g-horario" role="img" aria-label="Consumo horário de água em metros cúbicos por hora"></div>
+    </div>
+  </section>
+
+  <section class="painel" data-painel="diario">
+    <div class="cartao">
+      <div class="filtros" data-filtros="diario"></div>
+      <div class="grafico" id="g-diario" role="img" aria-label="Consumo diário de água em metros cúbicos por dia"></div>
+    </div>
+  </section>
+
+  <section class="painel" data-painel="semanal">
+    <div class="cartao">
+      <div class="filtros" data-filtros="semanal"></div>
+      <div class="grafico" id="g-semanal" role="img" aria-label="Consumo semanal de água em metros cúbicos por semana"></div>
+    </div>
+  </section>
+
+  <section class="painel" data-painel="mensal">
+    <div class="cartao">
+      <div class="filtros" data-filtros="mensal"></div>
+      <div class="grafico" id="g-mensal" role="img" aria-label="Consumo mensal de água em metros cúbicos por mês"></div>
+      <details class="tabela">
+        <summary>Ver tabela</summary>
+        <table id="t-mensal"><thead><tr><th>Mês</th><th>Consumo (m³)</th></tr></thead><tbody></tbody></table>
+      </details>
+    </div>
+  </section>
+
+  <section class="painel" data-painel="perfil">
+    <div class="cartao">
+      <div class="filtros">
+        <label>Período da amostra <select id="perfil-semestre"></select></label>
+        <div class="chips" id="perfil-dias" role="group" aria-label="Dia da semana"></div>
+      </div>
+      <h2 class="sub">Perfil de consumo médio por hora · <span id="perfil-rotulo"></span></h2>
+      <div class="grafico" id="g-perfil" role="img" aria-label="Consumo médio por hora do dia"></div>
+      <p class="nota" id="perfil-nota"></p>
+    </div>
+  </section>
+
+  <section class="painel" data-painel="ocupacao">
+    <div class="cartao">
+      <div class="filtros">
+        <span class="selo">Semestre: <b id="ocup-semestre"></b></span>
+        <div class="chips" id="ocup-dias" role="group" aria-label="Dia da semana"></div>
+      </div>
+      <h2 class="sub">Perfil de ocupação por meia hora · <span id="ocup-rotulo"></span></h2>
+      <div class="grafico" id="g-ocupacao" role="img" aria-label="Número de ocupantes do prédio por meia hora"></div>
+      <p class="nota">Ocupantes estimados pelo ensalamento do semestre: soma das vagas ocupadas (matriculados) das turmas em aula no prédio em cada meia hora.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <span id="status" class="status">Carregando dados…</span>
+  <span>Fonte: Hidrômetro 1, telemetria Spinon · PUMA/CT – Centro de Tecnologia, UFSM</span>
+</footer>
+</body>
+</html>
