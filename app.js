@@ -207,33 +207,39 @@ function desenharMensal(t) {
   }));
 }
 
-// ---------- perfil de consumo (período letivo, sem feriados — mascara_letivo do grafico2.py) ----------
+// ---------- perfil de consumo (média de cada hora sobre todos os dias daquele dia da semana) ----------
+// Períodos: semestres civis (1º = jan–jun, 2º = jul–dez) ou a série inteira; sem filtro de letivo/feriado.
+function faixaSemestre(semestre) {
+  const [n, a] = semestre.split("º/").map(Number);
+  return [msDeIso(`${a}-${n === 1 ? "01-01" : "07-01"}`), msDeIso(`${n === 1 ? a : a + 1}-${n === 1 ? "07-01" : "01-01"}`)];
+}
+
 function perfil(semestre, diaSem) {
-  const { periodos_letivos: periodos, feriados_no_letivo: feriados } = estado.calendario;
-  const fer = new Set(feriados);
-  const faixas = periodos.filter(p => semestre === "todos" || p[0] === semestre).map(p => [msDeIso(p[1]), msDeIso(p[2]) + 24 * H]);
+  const [a, b] = semestre === "todos" ? [-Infinity, Infinity] : faixaSemestre(semestre);
   const soma = Array(24).fill(0), n = Array(24).fill(0), dias = new Set();
   for (const x of estado.horas) {
-    if (x.v == null || x.l.sem !== diaSem) continue;
-    if (!faixas.some(([a, b]) => x.ms >= a && x.ms < b)) continue;
-    const k = isoDia(x.l);
-    if (fer.has(k)) continue;
-    soma[x.l.h] += x.v; n[x.l.h]++; dias.add(k);
+    if (x.v == null || x.l.sem !== diaSem || x.ms < a || x.ms >= b) continue;
+    soma[x.l.h] += x.v; n[x.l.h]++; dias.add(isoDia(x.l));
   }
   return { media: soma.map((s, i) => n[i] ? s / n[i] : null), nDias: dias.size };
 }
 
 function semestresComDado() {
   if (!estado.horas.length) return [];
-  const ini = estado.horas[0].ms, fim = estado.horas.at(-1).ms;
-  return estado.calendario.periodos_letivos.filter(p => msDeIso(p[2]) + 24 * H > ini && msDeIso(p[1]) <= fim).map(p => p[0]);
+  const lista = [];
+  for (const x of [estado.horas[0], estado.horas.at(-1)]) lista.push(`${x.l.m < 6 ? 1 : 2}º/${x.l.a}`);
+  const out = [];
+  for (let [n, a] = lista[0].split("º/").map(Number); ; n === 1 ? n = 2 : (n = 1, a++)) {
+    out.push(`${n}º/${a}`);
+    if (`${n}º/${a}` === lista[1]) return out;
+  }
 }
 
 function montarPerfil() {
   const sel = document.getElementById("perfil-semestre");
   const lista = semestresComDado();
   if (!estado.semestre) estado.semestre = lista.includes("1º/2025") ? "1º/2025" : lista.at(-1);
-  sel.replaceChildren(...lista.map(s => new Option(s, s, false, s === estado.semestre)), new Option("Todos os semestres letivos", "todos", false, estado.semestre === "todos"));
+  sel.replaceChildren(...lista.map(s => new Option(s, s, false, s === estado.semestre)), new Option("Todo o período", "todos", false, estado.semestre === "todos"));
   sel.onchange = () => { estado.semestre = sel.value; desenhar("perfil"); };
   const chips = document.getElementById("perfil-dias");
   if (!chips.children.length) {
@@ -248,9 +254,9 @@ function montarPerfil() {
 function desenharPerfil(t) {
   const { media, nDias } = perfil(estado.semestre, estado.perfilDia);
   document.querySelectorAll("#perfil-dias button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.d === estado.perfilDia)));
-  document.getElementById("perfil-rotulo").textContent = `${DIAS_LONGOS[estado.perfilDia]} · ${estado.semestre === "todos" ? "todos os semestres letivos" : estado.semestre}`;
+  document.getElementById("perfil-rotulo").textContent = `${DIAS_LONGOS[estado.perfilDia]} · ${estado.semestre === "todos" ? "todo o período" : estado.semestre}`;
   document.getElementById("perfil-nota").textContent = nDias
-    ? `Média de ${nDias} ${DIAS_LONGOS[estado.perfilDia].toLowerCase()}s letivas (sem feriados). Datas do calendário acadêmico da UFSM.`
+    ? `Média de cada hora sobre ${nDias} ${DIAS_LONGOS[estado.perfilDia].toLowerCase()}s do período (todos os dias, incluindo férias e feriados). 1º semestre = jan–jun; 2º = jul–dez.`
     : "Sem dados para esse dia no período escolhido.";
   const rot = media.map((_, h) => `${pad(h)}:00`);
   const pico = media.reduce((im, v, i) => v != null && (media[im] == null || v > media[im]) ? i : im, 0);
