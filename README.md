@@ -1,6 +1,6 @@
-# Água no Prédio 7C: painel público do Hidrômetro 1
+# Água no Prédio 9C: painel público do Hidrômetro 1
 
-Painel público do consumo de água do Prédio 7C do Centro de Tecnologia da UFSM (programa PUMA/CT). Ele substitui o relatório do Looker Studio "PUMA/CT - Consumo de Água" e se atualiza sozinho a cada hora.
+Painel público do consumo de água do Prédio 9C do Centro de Tecnologia da UFSM (programa PUMA/CT). Ele substitui o relatório do Looker Studio "PUMA/CT - Consumo de Água" e se atualiza sozinho a cada hora.
 
 ## Como funciona
 

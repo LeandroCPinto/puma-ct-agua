@@ -2,7 +2,7 @@
 // e reconsulta data/meta.json a cada 10 min para pegar a hora nova sem recarregar.
 "use strict";
 
-const PREDIO = "Prédio 7C";
+const PREDIO = "Prédio 9C";
 const LIMITE_ATRASO_H = 6;            // o mesmo MAX_ATRASO_HORAS do download_auto2.py
 const INTERVALO_CONSULTA_MS = 10 * 60 * 1000;
 const H = 3600 * 1000;
