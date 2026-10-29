@@ -264,6 +264,9 @@ function desenharPerfil(t) {
     tooltipRot: i => `${DIAS_LONGOS[estado.perfilDia]}, ${rot[i]}–${pad((i + 1) % 24)}:00` });
   // Rótulo só no pico, para não pôr número em todas as barras.
   op.series[0].label = { show: true, position: "top", color: t.texto2, fontSize: 11, formatter: p => p.dataIndex === pico && p.value != null ? `pico ${num(p.value, 2)}` : "" };
+  // Mesma escala nos 7 dias do período (pico da semana), para comparar um dia com outro.
+  const maxSemana = Math.max(0, ...[0, 1, 2, 3, 4, 5, 6].flatMap(d => perfil(estado.semestre, d).media.filter(v => v != null)));
+  if (maxSemana > 0) op.yAxis = { ...op.yAxis, max: Math.ceil(maxSemana * 1.1 * 20) / 20 };
   grafico("g-perfil").setOption(op, true);
 }
 
