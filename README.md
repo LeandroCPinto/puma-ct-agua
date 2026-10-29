@@ -5,11 +5,12 @@ Painel público do consumo de água do Prédio 9C do Centro de Tecnologia da UFS
 ## Como funciona
 
 ```
-ryzen7, cron a cada hora (minuto 10)
+ryzen7, cron a cada hora (minuto 15)
   atualizar.sh
-    1. download_auto2.py --days 3   (fica na pasta Hidrometro1 do Drive; baixa o Grafana da Spinon)
-    2. exportar.py                  ("Água Consumida.csv" -> data/consumo.json + data/meta.json)
-    3. git commit + push            (só quando há hora nova)
+    1. baixar.py --days 3   (Grafana da Spinon -> ~/.local/share/puma-ct-agua/Água Consumida.csv)
+    2. exportar.py          ("Água Consumida.csv" -> data/consumo.json + data/meta.json)
+    3. cópia do CSV na pasta Hidrometro1 do Drive (grafico2.py e backup), se a pasta existir
+    4. git commit + push    (só quando há hora nova)
 GitHub Pages  ->  index.html + app.js leem data/*.json e agregam no navegador
 ```
 
@@ -29,17 +30,21 @@ Abas: Hidrômetro 1, consumo horário, diário, semanal (segunda a domingo) e me
 ```bash
 git clone git@github.com:LeandroCPinto/puma-ct-agua.git ~/Documentos/puma-ct-agua
 mkdir -p ~/logs
-# se a pasta do Drive ou o python do download forem outros:
 cat > ~/.config/puma-ct-agua.env <<'EOF'
-HIDROMETRO_DIR="/caminho/para/Medições/Hidrometro1"
+SPINON_USER="..."                                            # login do Grafana da Spinon
+SPINON_PASS="..."
 PYTHON_DOWNLOAD="/caminho/do/python/com/pandas/e/playwright"
+HIDROMETRO_DIR="/caminho/para/Medições/Hidrometro1"          # opcional: recebe cópia do CSV
 EOF
+chmod 600 ~/.config/puma-ct-agua.env
+# histórico: copie o "Água Consumida.csv" para ~/.local/share/puma-ct-agua/
+# (ou rode uma vez o baixar.py sem --days, com as variáveis do .env exportadas)
 SEM_DOWNLOAD=1 ~/Documentos/puma-ct-agua/atualizar.sh      # teste sem baixar
 crontab -e
-# 10 * * * * $HOME/Documentos/puma-ct-agua/atualizar.sh >> $HOME/logs/puma-agua.log 2>&1
+# 15 * * * * $HOME/Documentos/puma-ct-agua/atualizar.sh >> $HOME/logs/puma-agua.log 2>&1
 ```
 
-Se o cron atual já roda o `download_auto2.py`, troque essa entrada por esta, que faz o download e a publicação.
+O `baixar.py` veio do `download_auto2.py` da pasta Hidrometro1, que o cron não usa mais. Ele roda no python do `PYTHON_DOWNLOAD` (pandas + playwright).
 
 ## Alertas no celular
 
@@ -66,7 +71,7 @@ No celular, instale o app ntfy e inscreva o tópico do `.env`. O estado (o que j
 - **Nova ocupação:** `python3 exportar.py --ocupacao Perfil_Ocupacao_Predio_MeiaHora.xlsx --semestre "2º/2025"`.
 - **Ver localmente:** `python3 -m http.server`, depois abra http://localhost:8000.
 
-Só usa a biblioteca padrão do Python. As credenciais da Spinon ficam no `download_auto2.py` do Drive e nunca entram neste repositório.
+`exportar.py` e `alerta.py` só usam a biblioteca padrão do Python. As credenciais da Spinon ficam no `~/.config/puma-ct-agua.env` e nunca entram neste repositório.
 
 ## Cache do navegador (embed no Notion)
 
